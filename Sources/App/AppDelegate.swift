@@ -466,9 +466,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 }
             }
             if outcome == nil {
-                guard let command = RootCommand.signal(signal, pid: tunnel.pid) else { return }
-                await letMenuBarRedraw()
-                outcome = runAsAdmin(command)
+                if let command = RootCommand.signal(signal, pid: tunnel.pid) {
+                    await letMenuBarRedraw()
+                    outcome = runAsAdmin(command)
+                } else {
+                    outcome = .failed(exitCode: -1, message: "invalid PID \(tunnel.pid)")
+                }
             }
 
             switch outcome {
