@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="372" viewBox="0 0 760 372" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif" role="img" aria-label="TU VPN – Illustration, not a screenshot">
+<rect width="760" height="372" rx="14" fill="#f5f5f7"/>
+<rect x="0" y="0" width="760" height="30" rx="14" fill="#e8e8ed"/>
+<rect x="0" y="16" width="760" height="14" fill="#e8e8ed"/>
+<rect x="590" y="10" width="22" height="11" rx="3" fill="none" stroke="#6e6e73" stroke-width="1.4"/>
+<rect x="593" y="13" width="14" height="5" rx="1" fill="#6e6e73"/>
+<path d="M628 21 l7 -8 a10 10 0 0 0 -14 0 z" fill="#6e6e73"/>
+<text x="740" y="20" font-size="13" text-anchor="end" fill="#1d1d1f">Mon 9:41</text>
+<rect x="438" y="4" width="40" height="22" rx="5" fill="#0a84ff"/>
+<text x="458" y="20" font-size="13.5" font-weight="700" text-anchor="middle" fill="#ffffff">TU</text>
+<rect x="428" y="32" width="318" height="289" rx="9" fill="#ffffff" stroke="#d2d2d7" stroke-width="1"/>
+<text x="450" y="52" font-size="12.5" fill="#1d1d1f"><tspan fill="#30a46c">●</tspan> Connected – TU only</text>
+<text x="450" y="73" font-size="12.5" fill="#6e6e73">IP address: 192.0.2.10</text>
+<text x="450" y="94" font-size="12.5" fill="#6e6e73">Session valid until Sat 10 Oct, 12:39</text>
+<text x="450" y="115" font-size="11" fill="#6e6e73">Fine to leave on – disconnect only to switch profiles</text>
+<line x1="438" y1="125.5" x2="736" y2="125.5" stroke="#e5e5ea"/>
+<text x="450" y="145" font-size="12.5" fill="#1d1d1f">Disconnect</text>
+<text x="450" y="166" font-size="12.5" fill="#1d1d1f">Log out (end session)</text>
+<line x1="438" y1="176.5" x2="736" y2="176.5" stroke="#e5e5ea"/>
+<text x="450" y="196" font-size="12.5" fill="#6e6e73">Account: e12345678@student.tuwien.ac.at</text>
+<text x="450" y="217" font-size="12.5" fill="#1d1d1f">Connect without Mac password</text>
+<text x="436" y="217" font-size="11" fill="#1d1d1f">✓</text>
+<text x="450" y="238" font-size="12.5" fill="#1d1d1f">Open at login</text>
+<text x="436" y="238" font-size="11" fill="#1d1d1f">✓</text>
+<text x="450" y="259" font-size="12.5" fill="#1d1d1f">End stale sessions …</text>
+<text x="450" y="280" font-size="12.5" fill="#1d1d1f">More</text>
+<text x="732" y="280" font-size="12" text-anchor="end" fill="#6e6e73">›</text>
+<line x1="438" y1="290.5" x2="736" y2="290.5" stroke="#e5e5ea"/>
+<text x="450" y="310" font-size="12.5" fill="#1d1d1f">Quit TU VPN</text>
+<text x="732" y="310" font-size="12" text-anchor="end" fill="#6e6e73">⌘Q</text>
+<rect x="14" y="42" width="300" height="176" rx="10" fill="#ffffff" stroke="#d2d2d7"/>
+<text x="28" y="64" font-size="12" font-weight="600" fill="#6e6e73" letter-spacing="0.4">MENU BAR</text>
+<rect x="28" y="75" width="58" height="24" rx="5" fill="#e8e8ed"/>
+<text x="57" y="92" font-size="13.5" font-weight="700" text-anchor="middle" fill="#b0b0b6">TU</text>
+<text x="102" y="92" font-size="13" fill="#1d1d1f">disconnected</text>
+<rect x="28" y="109" width="58" height="24" rx="5" fill="#e8e8ed"/>
+<text x="57" y="126" font-size="13.5" font-weight="700" text-anchor="middle" fill="#1d1d1f">TU</text>
+<text x="102" y="126" font-size="13" fill="#1d1d1f">connected – TU only</text>
+<rect x="28" y="143" width="58" height="24" rx="5" fill="#e8e8ed"/>
+<text x="57" y="160" font-size="13.5" font-weight="700" text-anchor="middle" fill="#1d1d1f">TU+</text>
+<text x="102" y="160" font-size="13" fill="#1d1d1f">connected – all traffic</text>
+<rect x="28" y="177" width="58" height="24" rx="5" fill="#e8e8ed"/>
+<text x="57" y="194" font-size="13.5" font-weight="700" text-anchor="middle" fill="#6e6e73">TU…</text>
+<text x="102" y="194" font-size="13" fill="#1d1d1f">busy</text>
+<text x="28" y="354" font-size="11" fill="#6e6e73">Illustration, not a screenshot</text>
+</svg>

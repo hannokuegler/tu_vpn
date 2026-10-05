@@ -1,0 +1,126 @@
+#!/bin/bash -p
+# tuvpn-helper — Teil des optionalen Modus "Ohne Mac-Passwort" von TU VPN.
+#
+# Liegt root-eigen unter /Library/TUvpn/ und wird per sudo (NOPASSWD, nur für diesen Helper und nur
+# mit genau diesen Argumenten, siehe /etc/sudoers.d/tuvpn) als root gestartet. Feste Schnittstelle:
+#
+#   tuvpn-helper connect 1_TU_getunnelt|2_Alles_getunnelt
+#       stdin: drei Zeilen — Session-Cookie, Connect-URL, Server-Fingerprint (strikt geprüft)
+#   tuvpn-helper disconnect hup|int
+#       hup = Tunnel trennen, Session bleibt offen · int = Session beim Server abmelden
+#
+# Es gibt keine weiteren Parameter, keine Umgebungsvariablen und keine Pfade von außen.
+# Startet ausschließlich die root-eigene openconnect-Kopie in /Library/TUvpn/bin/.
+
+set -u
+export PATH=/usr/bin:/bin:/usr/sbin:/sbin
+export LC_ALL=C
+IFS=$' \t\n'
+umask 022
+
+readonly HELPER_VERSION=1
+readonly INSTALL_DIR=/Library/TUvpn
+readonly OPENCONNECT="$INSTALL_DIR/bin/openconnect"
+readonly VPNC_SCRIPT="$INSTALL_DIR/vpnc-script"
+readonly PID_FILE=/var/run/tuvpn.pid
+readonly LOG_FILE=/var/log/tuvpn.log
+readonly RECONNECT_TIMEOUT=86400
+# Root-eigenes CA-Bundle von macOS. Der Helper prüft das Server-Zertifikat damit (inkl. Hostname)
+# statt mit dem Fingerprint aus stdin — sonst könnte jeder Aufrufer einen eigenen Pin unterschieben.
+readonly CA_FILE=/etc/ssl/cert.pem
+# Die Kopie würde sonst zur Laufzeit Module und Konfiguration aus dem (user-beschreibbaren)
+# Homebrew-Verzeichnis nachladen, z. B. p11-kit-trust.dylib. Die Sandbox verbietet das.
+readonly SANDBOX_PROFILE='(version 1)(allow default)(deny file-read* file-map-executable (subpath "/opt/homebrew") (subpath "/usr/local") (subpath "/opt/local") (subpath "/Users"))'
+
+die() {
+  echo "tuvpn-helper: $2" >&2
+  exit "$1"
+}
+
+valid_profile() {
+  case "$1" in
+    1_TU_getunnelt | 2_Alles_getunnelt) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+valid_connect_url() {
+  local pattern='^https://vpn\.tuwien\.ac\.at(:443)?(/[A-Za-z0-9._~/?=&%+:-]*)?$'
+  [ "${#1}" -le 512 ] && [[ "$1" =~ $pattern ]]
+}
+
+valid_fingerprint() {
+  local pattern='^pin-sha256:[A-Za-z0-9+/]{43}=$'
+  [[ "$1" =~ $pattern ]]
+}
+
+valid_cookie() {
+  local pattern='^[!-~]+$' # druckbares ASCII ohne Leerzeichen
+  [ "${#1}" -ge 1 ] && [ "${#1}" -le 8192 ] && [[ "$1" =~ $pattern ]] || return 1
+  case "$1" in
+    *\'* | *\"* | *\\* | *\`*) return 1 ;;
+  esac
+  return 0
+}
+
+# PID des laufenden TU-Tunnels aus der root-eigenen PID-Datei — nur wenn es wirklich openconnect ist.
+tunnel_pid() {
+  local pid
+  [ -f "$PID_FILE" ] && [ ! -L "$PID_FILE" ] || return 1
+  pid=$(/usr/bin/head -n 1 "$PID_FILE")
+  [[ "$pid" =~ ^[0-9]+$ ]] && [ "$pid" -gt 1 ] || return 1
+  case "$(/bin/ps -p "$pid" -o comm=)" in
+    *openconnect) echo "$pid" ;;
+    *) return 1 ;;
+  esac
+}
+
+cmd_connect() {
+  local profile="$1" cookie connect_url fingerprint
+  valid_profile "$profile" || die 64 "invalid profile"
+  IFS= read -r cookie || die 65 "missing cookie on stdin"
+  IFS= read -r connect_url || die 65 "missing connect URL on stdin"
+  IFS= read -r fingerprint || die 65 "missing fingerprint on stdin"
+  valid_cookie "$cookie" || die 65 "invalid cookie"
+  valid_connect_url "$connect_url" || die 65 "invalid connect URL"
+  valid_fingerprint "$fingerprint" || die 65 "invalid server fingerprint" # geprüft, aber bewusst nicht benutzt
+  [ -x "$OPENCONNECT" ] || die 69 "$OPENCONNECT missing — set up passwordless mode again"
+  [ -x /usr/bin/sandbox-exec ] || die 69 "/usr/bin/sandbox-exec missing"
+  [ -f "$CA_FILE" ] || die 69 "$CA_FILE missing"
+  if tunnel_pid >/dev/null; then die 75 "TU VPN tunnel is already running"; fi
+
+  /bin/rm -f "$LOG_FILE"
+  {
+    echo "PROFIL=$profile"
+    # printf ist ein Shell-Builtin: das Cookie taucht in keiner Prozessliste auf.
+    printf '%s\n' "$cookie" | /usr/bin/sandbox-exec -p "$SANDBOX_PROFILE" "$OPENCONNECT" --background --protocol=anyconnect \
+      --script="$VPNC_SCRIPT" --pid-file="$PID_FILE" --reconnect-timeout="$RECONNECT_TIMEOUT" \
+      --no-system-trust --cafile="$CA_FILE" --cookie-on-stdin "$connect_url"
+  } >"$LOG_FILE" 2>&1
+}
+
+cmd_disconnect() {
+  local signal pid
+  case "$1" in
+    hup) signal=HUP ;;
+    int) signal=INT ;;
+    *) die 64 "invalid disconnect mode" ;;
+  esac
+  pid=$(tunnel_pid) || die 3 "no TU VPN tunnel running"
+  /bin/kill "-$signal" "$pid"
+}
+
+main() {
+  [ "$(/usr/bin/id -u)" = 0 ] || die 77 "must run as root (via sudo)"
+  [ "$#" -eq 2 ] || die 64 "usage: tuvpn-helper connect <profile> | disconnect hup|int"
+  case "$1" in
+    connect) cmd_connect "$2" ;;
+    disconnect) cmd_disconnect "$2" ;;
+    *) die 64 "unknown command" ;;
+  esac
+}
+
+# Beim Einbinden in die Tests (source) nichts ausführen.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  main "$@"
+fi

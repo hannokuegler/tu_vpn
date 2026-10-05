@@ -1,0 +1,11 @@
+name: Idee · Feature request
+description: Vorschlag für TU VPN · Suggest something for TU VPN
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Was soll TU VPN können? · What should TU VPN do?
+      description: Und welches Problem löst das für dich? · And which problem does it solve for you?
+    validations:
+      required: true

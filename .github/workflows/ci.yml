@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Tests (Swift-Logik + Shell-Helper)
+        run: ./build.sh test
+      - name: Universal-App bauen
+        run: ./build.sh
+      - name: openconnect-Kopie für den passwortlosen Modus bauen (ohne root)
+        run: |
+          brew install openconnect
+          bash Helper/tuvpn-setup.sh build "$RUNNER_TEMP/tuvpn-bundle"
+          cat "$RUNNER_TEMP/tuvpn-bundle/VERSION"
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: shellcheck
+        run: shellcheck install.sh uninstall.sh build.sh Helper/tuvpn-helper Helper/tuvpn-setup.sh Tests/helper_tests.sh

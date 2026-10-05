@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Account, Passwort, MFA (TU-IT-Support) · Account, password, MFA (TU IT support)
+    url: https://colab.tuwien.ac.at/spaces/SVCSP/pages/141888133/Anleitungen+TUvpn
+    about: Probleme mit dem TU-Account selbst klärt die TU, nicht dieses Projekt · Problems with the TU account itself are handled by TU, not this project.
+  - name: Sicherheitslücke melden · Report a vulnerability
+    url: https://github.com/hannokuegler/tu_vpn/security/advisories/new
+    about: Bitte privat melden · Please report privately.
