@@ -1,0 +1,2 @@
+scripts/*.py linguist-detectable=false
+docs/*.svg linguist-generated=true
