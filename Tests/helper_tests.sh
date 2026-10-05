@@ -2,7 +2,7 @@
 # Tests für Helper/tuvpn-helper und Helper/tuvpn-setup.sh (Prüfregeln, sudoers-Regel).
 # Läuft ohne root: ./build.sh test
 set -u
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 failures=0
 checks=0
@@ -21,7 +21,7 @@ summary() { echo "$((checks - failures))/$checks shell checks ok ($1)"; [ "$fail
 
 # Beide Skripte definieren dieselben readonly-Konstanten → je eigene Subshell.
 (
-# shellcheck source=../Helper/tuvpn-helper
+# shellcheck disable=SC1091
 source Helper/tuvpn-helper
 set +e
 
@@ -37,6 +37,7 @@ expect 1 "http" valid_connect_url "http://vpn.tuwien.ac.at/"
 expect 1 "fremder Host" valid_connect_url "https://vpn.tuwien.ac.at.evil.example/"
 expect 1 "anderer Port" valid_connect_url "https://vpn.tuwien.ac.at:8443/"
 expect 1 "Quote" valid_connect_url "https://vpn.tuwien.ac.at/'x"
+# shellcheck disable=SC2016  # $(…) soll wörtlich ankommen
 expect 1 "Command Substitution" valid_connect_url 'https://vpn.tuwien.ac.at/$(id)'
 expect 1 "Leerzeichen" valid_connect_url "https://vpn.tuwien.ac.at/ x"
 expect 1 "zu lang" valid_connect_url "https://vpn.tuwien.ac.at/$(printf 'a%.0s' {1..600})"
@@ -48,6 +49,7 @@ expect 0 "Cookie" valid_cookie "webvpn=ABC@123@456@DEF"
 expect 1 "leeres Cookie" valid_cookie ""
 expect 1 "Cookie mit Leerzeichen" valid_cookie "a b"
 expect 1 "Cookie mit Quote" valid_cookie "a'b"
+# shellcheck disable=SC2016
 expect 1 "Cookie mit Backtick" valid_cookie 'a`id`'
 expect 1 "Cookie mit Backslash" valid_cookie 'a\b'
 expect 1 "Cookie zu lang" valid_cookie "$(printf 'a%.0s' {1..8200})"
@@ -57,7 +59,7 @@ summary tuvpn-helper
 
 (
 # sudoers-Regel aus dem Setup
-# shellcheck source=../Helper/tuvpn-setup.sh
+# shellcheck disable=SC1091
 source Helper/tuvpn-setup.sh
 set +e
 rule_file=$(mktemp)
@@ -70,6 +72,8 @@ expect 0 "eigener User gültig" valid_username "$(id -un)"
 expect 1 "User mit Leerzeichen" valid_username "a b"
 expect 1 "User mit Komma" valid_username "a,ALL"
 expect 1 "unbekannter User" valid_username "gibtsnicht_tuvpn"
+expect 1 "Ziel unter /Users wird abgelehnt" bash Helper/tuvpn-setup.sh build "$HOME/tuvpn-bundle-test" 2>/dev/null
+expect 1 "relatives Ziel wird abgelehnt" bash Helper/tuvpn-setup.sh build relative/dir 2>/dev/null
 
 summary tuvpn-setup.sh
 ) || failures=$((failures + 1))

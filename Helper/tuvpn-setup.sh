@@ -54,17 +54,29 @@ dependencies_of() {
 # biegt die Verweise auf @loader_path um und signiert alles ad-hoc neu.
 build_bundle() {
   local target="$1" openconnect real_binary vpnc_script queue_file origin_file
-  command -v otool >/dev/null && command -v install_name_tool >/dev/null \
-    || die "otool/install_name_tool missing — install the Command Line Tools: xcode-select --install"
+  if ! command -v otool >/dev/null || ! command -v install_name_tool >/dev/null; then
+    die "otool/install_name_tool missing — install the Command Line Tools: xcode-select --install"
+  fi
   otool -h /bin/ls >/dev/null 2>&1 || die "otool does not work — install the Command Line Tools: xcode-select --install"
 
+  # Die Sandbox des Helpers sperrt diese Pfade — eine Kopie darin könnte nicht starten.
+  case "$target" in
+    /Users/* | /opt/homebrew/* | /usr/local/* | /opt/local/*)
+      die "target must not be inside /Users, /opt/homebrew, /usr/local or /opt/local (use e.g. /private/tmp/…)" ;;
+  esac
+  case "$target" in
+    /*) ;;
+    *) die "target must be an absolute path" ;;
+  esac
   openconnect=$(find_openconnect)
   real_binary=$(realpath "$openconnect")
   local help_text
   help_text=$("$openconnect" --help 2>&1 || true) # --help endet mit Exit 1
   vpnc_script=$(sed -n 's/.*[Dd]efault: "\(.*vpnc-script\)".*/\1/p' <<<"$help_text")
   vpnc_script=${vpnc_script%%$'\n'*}
-  [ -n "$vpnc_script" ] && [ -f "$vpnc_script" ] || die "vpnc-script not found (brew reinstall vpnc-scripts)"
+  if [ -z "$vpnc_script" ] || [ ! -f "$vpnc_script" ]; then
+    die "vpnc-script not found (brew reinstall openconnect)"
+  fi
 
   mkdir -p "$target/bin" "$target/lib"
   cp "$real_binary" "$target/bin/openconnect"

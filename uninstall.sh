@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1111  # typografische Anführungszeichen in Meldungen sind gewollt
 # TU VPN — Deinstallation / uninstall
 #
 #   curl -fsSL https://raw.githubusercontent.com/hannokuegler/tu_vpn/main/uninstall.sh | bash
@@ -47,6 +48,7 @@ main() {
   done
   if [ "${#root_paths[@]}" -gt 0 ]; then
     say "Admin-Rechte nötig für: ${root_paths[*]}" "Admin rights needed for: ${root_paths[*]}"
+    # shellcheck disable=SC2024  # /dev/tty ist für die Passwortabfrage von sudo gedacht
     if sudo /bin/rm -rf "${root_paths[@]}" </dev/tty; then
       say "✓ entfernt" "✓ removed"
     else

@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1111  # typografische Anführungszeichen in Meldungen sind gewollt
 # TU VPN — Installer / installer
 #
 #   curl -fsSL https://raw.githubusercontent.com/hannokuegler/tu_vpn/main/install.sh | bash

@@ -22,8 +22,10 @@ jobs:
       - name: openconnect-Kopie für den passwortlosen Modus bauen (ohne root)
         run: |
           brew install openconnect
-          bash Helper/tuvpn-setup.sh build "$RUNNER_TEMP/tuvpn-bundle"
-          cat "$RUNNER_TEMP/tuvpn-bundle/VERSION"
+          # Ziel außerhalb von /Users: die Sandbox des Helpers sperrt /Users
+          bundle_dir=$(mktemp -d /private/tmp/tuvpn-bundle.XXXXXX)
+          bash Helper/tuvpn-setup.sh build "$bundle_dir/TUvpn"
+          cat "$bundle_dir/TUvpn/VERSION"
 
   shellcheck:
     runs-on: ubuntu-latest

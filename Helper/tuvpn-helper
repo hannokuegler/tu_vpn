@@ -18,6 +18,7 @@ export LC_ALL=C
 IFS=$' \t\n'
 umask 022
 
+# shellcheck disable=SC2034  # wird von Tests/main.swift gegen die App geprüft
 readonly HELPER_VERSION=1
 readonly INSTALL_DIR=/Library/TUvpn
 readonly OPENCONNECT="$INSTALL_DIR/bin/openconnect"
