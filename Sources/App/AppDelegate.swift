@@ -257,8 +257,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func runOnboardingFromMenu() { runOnboarding() }
 
     private func runOnboarding() {
+        let answer = askLogin(welcome: true)
+        // Erst nach einer Antwort merken – wird die App mitten im Dialog beendet, kommt er beim nächsten Start wieder.
         defaults.set(true, forKey: Config.onboardingDoneKey)
-        guard let (_, startAtLogin) = askLogin(welcome: true) else { return }
+        guard let (_, startAtLogin) = answer else { return }
         if startAtLogin && SMAppService.mainApp.status != .enabled {
             try? SMAppService.mainApp.register()
         }

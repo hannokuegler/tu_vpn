@@ -2,6 +2,11 @@
 
 Alle nennenswerten Änderungen · All notable changes. Format: [Keep a Changelog](https://keepachangelog.com/), Versionen nach [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- Willkommensdialog erscheint erneut, wenn die App beendet wurde, bevor er beantwortet war · welcome dialog shows again if the app quit before it was answered
+
 ## [0.1.0] – 2026-10-05
 
 Erste öffentliche Version · First public release.
