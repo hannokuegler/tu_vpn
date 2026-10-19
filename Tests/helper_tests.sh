@@ -53,6 +53,19 @@ expect 1 "Cookie mit Quote" valid_cookie "a'b"
 expect 1 "Cookie mit Backtick" valid_cookie 'a`id`'
 expect 1 "Cookie mit Backslash" valid_cookie 'a\b'
 expect 1 "Cookie zu lang" valid_cookie "$(printf 'a%.0s' {1..8200})"
+# cmd_connect bis zur ersten Prüfung nach den Eingaben: gültig → 69 (openconnect-Kopie fehlt), ungültig → 65
+# shellcheck disable=SC2329  # wird über expect aufgerufen
+connect_exits() { # connect_exits <exit-code>, stdin wie beim Helper
+  (cmd_connect 1_TU_getunnelt) 2>/dev/null
+  [ "$?" = "$1" ]
+}
+url="https://vpn.tuwien.ac.at/"
+if [ ! -e /Library/TUvpn/bin/openconnect ]; then
+  expect 0 "gültige Eingabe besteht die Prüfung" connect_exits 69 < <(printf '%s\n' "webvpn=ABC" "$url" "$fingerprint")
+fi
+expect 0 "überlanges Cookie wird abgelehnt" connect_exits 65 < <(printf '%s\n' "$(printf 'a%.0s' {1..20000})" "$url" "$fingerprint")
+expect 0 "überlange URL wird abgelehnt" connect_exits 65 < <(printf '%s\n' "webvpn=ABC" "$url$(printf 'a%.0s' {1..2000})" "$fingerprint")
+expect 0 "Fingerprint mit Anhang wird abgelehnt" connect_exits 65 < <(printf '%s\n' "webvpn=ABC" "$url" "${fingerprint}AAAA")
 expect 1 "Helper verweigert ohne root" bash Helper/tuvpn-helper connect 1_TU_getunnelt </dev/null 2>/dev/null
 summary tuvpn-helper
 ) || failures=$((failures + 1))

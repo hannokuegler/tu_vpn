@@ -35,6 +35,11 @@ main() {
     case "$answer" in [jJyY]*) return 0 ;; *) return 1 ;; esac
   }
 
+  # TUVPN_VERSION landet in der Download-URL → nur latest oder vX.Y.Z
+  if [ "$version" != "latest" ] && ! [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    fail "Ungültige Version: $version (erwartet z. B. v0.1.0)" "Invalid version: $version (expected e.g. v0.1.0)"
+  fi
+
   # ── macOS ────────────────────────────────────────────────────────────────
   [ "$(uname -s)" = "Darwin" ] || fail "TU VPN läuft nur auf macOS." "TU VPN only runs on macOS."
   local macos_version macos_major

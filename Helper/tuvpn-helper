@@ -79,9 +79,10 @@ tunnel_pid() {
 cmd_connect() {
   local profile="$1" cookie connect_url fingerprint
   valid_profile "$profile" || die 64 "invalid profile"
-  IFS= read -r cookie || die 65 "missing cookie on stdin"
-  IFS= read -r connect_url || die 65 "missing connect URL on stdin"
-  IFS= read -r fingerprint || die 65 "missing fingerprint on stdin"
+  # Höchstens ein Zeichen mehr als erlaubt lesen: root puffert nie beliebig viel vom Aufrufer.
+  IFS= read -r -n 8193 cookie || die 65 "missing cookie on stdin"
+  IFS= read -r -n 513 connect_url || die 65 "missing connect URL on stdin"
+  IFS= read -r -n 56 fingerprint || die 65 "missing fingerprint on stdin"
   valid_cookie "$cookie" || die 65 "invalid cookie"
   valid_connect_url "$connect_url" || die 65 "invalid connect URL"
   valid_fingerprint "$fingerprint" || die 65 "invalid server fingerprint" # geprüft, aber bewusst nicht benutzt

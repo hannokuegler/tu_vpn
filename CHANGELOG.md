@@ -7,6 +7,11 @@ Alle nennenswerten Änderungen · All notable changes. Format: [Keep a Changelog
 ### Fixed
 - Willkommensdialog erscheint erneut, wenn die App beendet wurde, bevor er beantwortet war · welcome dialog shows again if the app quit before it was answered
 
+### Security
+- Einrichtung „Ohne Mac-Passwort“: Homebrew-openconnect läuft als root nie mehr direkt (nur als `nobody`), die Kopie nur in der Sandbox; Arbeitsdateien in `/private/tmp` statt im TMPDIR des Users · passwordless setup no longer runs Homebrew's openconnect as root (only as `nobody`) and the copy only inside the sandbox; work files in `/private/tmp` instead of the user's TMPDIR
+- Helper liest von stdin höchstens so viel, wie die Prüfregeln erlauben · helper reads no more from stdin than the validation rules allow
+- `install.sh`: `TUVPN_VERSION` nur `latest` oder `vX.Y.Z` (landet in der Download-URL) · `TUVPN_VERSION` only `latest` or `vX.Y.Z` (it ends up in the download URL)
+
 ## [0.1.0] – 2026-10-05
 
 Erste öffentliche Version · First public release.
