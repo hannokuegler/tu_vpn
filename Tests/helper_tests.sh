@@ -54,7 +54,7 @@ expect 1 "Cookie mit Backtick" valid_cookie 'a`id`'
 expect 1 "Cookie mit Backslash" valid_cookie 'a\b'
 expect 1 "Cookie zu lang" valid_cookie "$(printf 'a%.0s' {1..8200})"
 # cmd_connect bis zur ersten Prüfung nach den Eingaben: gültig → 69 (openconnect-Kopie fehlt), ungültig → 65
-# shellcheck disable=SC2329  # wird über expect aufgerufen
+# shellcheck disable=SC2317,SC2329  # wird über expect aufgerufen (SC2317 = ältere shellcheck)
 connect_exits() { # connect_exits <exit-code>, stdin wie beim Helper
   (cmd_connect 1_TU_getunnelt) 2>/dev/null
   [ "$?" = "$1" ]
