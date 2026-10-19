@@ -34,6 +34,16 @@ require_root() {
   [ "$(id -u)" = 0 ] || die "must run as root"
 }
 
+# Programme aus dem (user-beschreibbaren) Homebrew-Verzeichnis nie als root starten:
+# als root laufen sie als "nobody" (sudo braucht als root kein Passwort).
+run_unprivileged() {
+  if [ "$(id -u)" = 0 ]; then
+    /usr/bin/sudo -n -u nobody -- "$@"
+  else
+    "$@"
+  fi
+}
+
 find_openconnect() {
   local candidate
   for candidate in "${OPENCONNECT_CANDIDATES[@]}"; do
@@ -71,7 +81,7 @@ build_bundle() {
   openconnect=$(find_openconnect)
   real_binary=$(realpath "$openconnect")
   local help_text
-  help_text=$("$openconnect" --help 2>&1 || true) # --help endet mit Exit 1
+  help_text=$(run_unprivileged "$openconnect" --help 2>&1 || true) # --help endet mit Exit 1
   vpnc_script=$(sed -n 's/.*[Dd]efault: "\(.*vpnc-script\)".*/\1/p' <<<"$help_text")
   vpnc_script=${vpnc_script%%$'\n'*}
   if [ -z "$vpnc_script" ] || [ ! -f "$vpnc_script" ]; then
@@ -135,14 +145,6 @@ build_bundle() {
   chmod 755 "$target/vpnc-script"
   cp "$SCRIPT_DIR/tuvpn-helper" "$target/tuvpn-helper"
   chmod 755 "$target/tuvpn-helper"
-  {
-    echo "helper=$HELPER_VERSION"
-    echo "source=$real_binary"
-    local version_text
-    version_text=$("$target/bin/openconnect" --version 2>&1 || true)
-    echo "openconnect=${version_text%%$'\n'*}"
-  } >"$target/VERSION"
-  chmod 644 "$target/VERSION"
 
   # Selbsttest: keine Verweise mehr ins Homebrew-Verzeichnis, Kopie startet.
   local dependencies
@@ -152,11 +154,18 @@ build_bundle() {
       die "$file still references libraries outside the bundle"
     fi
   done
-  local sandbox_profile
+  local sandbox_profile version_text
   sandbox_profile=$(sed -n "s/^readonly SANDBOX_PROFILE='\(.*\)'$/\1/p" "$SCRIPT_DIR/tuvpn-helper")
   [ -n "$sandbox_profile" ] || die "sandbox profile not found in tuvpn-helper"
-  /usr/bin/sandbox-exec -p "$sandbox_profile" "$target/bin/openconnect" --version >/dev/null 2>&1 \
+  # Auch die Kopie nur in der Sandbox starten — ohne sie lädt sie Module aus dem Homebrew-Verzeichnis.
+  version_text=$(/usr/bin/sandbox-exec -p "$sandbox_profile" "$target/bin/openconnect" --version 2>&1) \
     || die "copied openconnect does not start inside the sandbox"
+  {
+    echo "helper=$HELPER_VERSION"
+    echo "source=$real_binary"
+    echo "openconnect=${version_text%%$'\n'*}"
+  } >"$target/VERSION"
+  chmod 644 "$target/VERSION"
 }
 
 valid_username() {
@@ -177,6 +186,10 @@ install_mode() {
   grep -qE '^[#@]includedir[[:space:]]+(/private)?/etc/sudoers\.d' /etc/sudoers \
     || die "/etc/sudoers does not include /etc/sudoers.d"
 
+  # Als root erben wir TMPDIR des Users (/var/folders/…, gehört dem User): dort könnte ein Programm
+  # des Users die Arbeitsdateien von build_bundle zwischendurch austauschen. /private/tmp hat das
+  # Sticky-Bit — root-eigene Dateien darin kann der User weder ersetzen noch umbenennen.
+  export TMPDIR=/private/tmp
   staging=$(mktemp -d /Library/.TUvpn-staging.XXXXXX)
   sudoers_temp=$(mktemp /tmp/tuvpn-sudoers.XXXXXX)
   CLEANUP_PATHS+=("$staging" "$sudoers_temp")
