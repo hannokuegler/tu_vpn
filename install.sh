@@ -7,7 +7,6 @@
 # Prüft macOS und Homebrew, installiert openconnect, lädt die neueste Release-ZIP von GitHub,
 # prüft deren SHA-256 gegen SHA256SUMS, installiert nach /Applications und startet die App.
 # Bestimmte Version: TUVPN_VERSION=v0.1.0 bash install.sh
-# Ist die GitHub CLI (gh) angemeldet, wird zusätzlich die Build-Provenance-Attestation geprüft.
 #
 # Alles steckt in main(), damit ein abgebrochener Download nie halb ausgeführt wird.
 
@@ -111,16 +110,6 @@ main() {
   [ "$expected" = "$actual" ] || fail "Prüfsumme stimmt nicht – Download beschädigt oder manipuliert. Abbruch." \
     "Checksum mismatch – download damaged or tampered with. Aborting."
   echo "  $actual ✓"
-
-  # SHA256SUMS liegt im selben Release wie die ZIP — die Attestation belegt zusätzlich, dass die ZIP
-  # in GitHub Actions dieses Repos gebaut wurde. Nur möglich, wenn gh installiert und angemeldet ist.
-  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1 </dev/null; then
-    step "Herkunft prüfen (GitHub-Attestation)" "Verifying provenance (GitHub attestation)"
-    gh attestation verify "$work_dir/$zip_name" --repo "$repo" >/dev/null </dev/null \
-      || fail "Attestation nicht bestätigt – Herkunft der ZIP unklar. Abbruch (ohne gh-Anmeldung wird nur die Prüfsumme geprüft)." \
-        "Attestation not confirmed – origin of the ZIP unclear. Aborting (without a gh login only the checksum is checked)."
-    echo "  ✓"
-  fi
 
   ditto -x -k "$work_dir/$zip_name" "$work_dir/unpacked"
   local new_app="$work_dir/unpacked/$app_name.app"
