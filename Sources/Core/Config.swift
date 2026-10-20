@@ -135,7 +135,7 @@ enum Passwordless {
     static let versionFilePath = "/Library/TUvpn/VERSION"
     static let sudoersPath = "/etc/sudoers.d/tuvpn"
     /// Muss zu HELPER_VERSION in Helper/tuvpn-helper passen.
-    static let expectedHelperVersion = 1
+    static let expectedHelperVersion = 2
 
     /// Bewertet, was auf der Platte liegt. `currentOpenconnectSource` = aufgelöster Pfad des
     /// Homebrew-openconnect (nil, wenn Homebrew-openconnect fehlt — die Kopie läuft trotzdem).
