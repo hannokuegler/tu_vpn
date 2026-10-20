@@ -212,7 +212,7 @@ checkEqual(ExecutableTrust.problems([.init(path: "/opt/local/sbin/openconnect", 
 
 // MARK: Ohne Mac-Passwort
 
-let versionFile = "helper=1\nsource=/opt/homebrew/Cellar/openconnect/9.21/bin/openconnect\nopenconnect=OpenConnect version v9.21\n"
+let versionFile = "helper=\(Passwordless.expectedHelperVersion)\nsource=/opt/homebrew/Cellar/openconnect/9.21/bin/openconnect\nopenconnect=OpenConnect version v9.21\n"
 let currentSource = "/opt/homebrew/Cellar/openconnect/9.21/bin/openconnect"
 checkEqual(Passwordless.evaluate(helperInstalled: false, sudoersInstalled: false, versionFile: nil,
                                  currentOpenconnectSource: currentSource), .off, "nicht eingerichtet")
@@ -224,7 +224,8 @@ checkEqual(Passwordless.evaluate(helperInstalled: true, sudoersInstalled: true, 
                                  currentOpenconnectSource: "/opt/homebrew/Cellar/openconnect/9.22/bin/openconnect"),
            .outdated, "openconnect aktualisiert")
 checkEqual(Passwordless.evaluate(helperInstalled: true, sudoersInstalled: true,
-                                 versionFile: versionFile.replacingOccurrences(of: "helper=1", with: "helper=0"),
+                                 versionFile: versionFile.replacingOccurrences(of: "helper=\(Passwordless.expectedHelperVersion)",
+                                                                              with: "helper=\(Passwordless.expectedHelperVersion - 1)"),
                                  currentOpenconnectSource: currentSource), .outdated, "alter Helper")
 checkEqual(Passwordless.evaluate(helperInstalled: true, sudoersInstalled: true, versionFile: nil,
                                  currentOpenconnectSource: currentSource), .outdated, "VERSION fehlt")
