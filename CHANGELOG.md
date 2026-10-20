@@ -4,6 +4,8 @@ Alle nennenswerten Änderungen · All notable changes. Format: [Keep a Changelog
 
 ## [Unreleased]
 
+## [0.1.1] – 2026-10-20
+
 ### Fixed
 - Willkommensdialog erscheint erneut, wenn die App beendet wurde, bevor er beantwortet war · welcome dialog shows again if the app quit before it was answered
 - Anmeldung scheiterte mit „unerwartete Session-Daten“: der TU-Server liefert seit Okt 2026 Cookies mit Leerzeichen/Quotes – die sind jetzt erlaubt (App und Helper) · login failed with “unexpected session data”: the TU server now sends cookies containing spaces/quotes, which are now accepted (app and helper)
@@ -38,4 +40,5 @@ Erste öffentliche Version · First public release.
 - Alle Eingaben für root-Befehle werden validiert und gequotet; Cookie-Datei exklusiv mit `0600`
 - Details: [SECURITY.md](SECURITY.md)
 
+[0.1.1]: https://github.com/hannokuegler/tu_vpn/releases/tag/v0.1.1
 [0.1.0]: https://github.com/hannokuegler/tu_vpn/releases/tag/v0.1.0
