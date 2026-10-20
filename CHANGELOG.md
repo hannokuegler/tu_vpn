@@ -6,6 +6,9 @@ Alle nennenswerten Änderungen · All notable changes. Format: [Keep a Changelog
 
 ### Fixed
 - Willkommensdialog erscheint erneut, wenn die App beendet wurde, bevor er beantwortet war · welcome dialog shows again if the app quit before it was answered
+- Anmeldung scheiterte mit „unerwartete Session-Daten“: der TU-Server liefert seit Okt 2026 Cookies mit Leerzeichen/Quotes – die sind jetzt erlaubt (App und Helper) · login failed with “unexpected session data”: the TU server now sends cookies containing spaces/quotes, which are now accepted (app and helper)
+- Ein laufender Login (`openconnect --authenticate`) wurde als verbundener Tunnel angezeigt · a running login (`openconnect --authenticate`) was shown as a connected tunnel
+- Die Fehlermeldung nennt jetzt, welcher Session-Wert verworfen wurde (nie den Cookie-Inhalt) · the error now names which session value was rejected (never the cookie's content)
 
 ### Security
 - Einrichtung „Ohne Mac-Passwort“: Homebrew-openconnect läuft als root nie mehr direkt (nur als `nobody`), die Kopie nur in der Sandbox; Arbeitsdateien in `/private/tmp` statt im TMPDIR des Users · passwordless setup no longer runs Homebrew's openconnect as root (only as `nobody`) and the copy only inside the sandbox; work files in `/private/tmp` instead of the user's TMPDIR

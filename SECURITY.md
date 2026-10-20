@@ -50,7 +50,7 @@ openconnect creates a network interface and changes routes and DNS. There are tw
 **Everything that reaches root is validated and quoted** (`Sources/Core/Session.swift`, `Sources/Core/RootCommand.swift`, `Helper/tuvpn-helper`)
 - connect URL: must be `https://vpn.tuwien.ac.at[:443]/…`, no user info, only a conservative character set
 - fingerprint: exactly `pin-sha256:` + 44 base64 characters (32 bytes)
-- cookie: printable ASCII without spaces, quotes, backslash or backtick, max. 8 KiB
+- cookie: printable ASCII (spaces and quotes allowed — it only ever reaches openconnect via a 0600 file or stdin, never a shell command), no control characters or line breaks, max. 8 KiB
 - profile: only `1_TU_getunnelt` or `2_Alles_getunnelt`
 - openconnect path: only from a fixed list (`/opt/homebrew/bin`, `/usr/local/bin`, `/opt/local/sbin`)
 - every variable part is single-quoted for the shell, then escaped for AppleScript; unit tests check the exact commands, including injection attempts (`'`, `$(…)`, `..`)

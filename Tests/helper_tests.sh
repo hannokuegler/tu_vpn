@@ -47,11 +47,13 @@ expect 1 "sha1-Fingerprint" valid_fingerprint "sha1:0123456789abcdef0123456789ab
 expect 1 "Fingerprint mit Zeilenumbruch" valid_fingerprint "$fingerprint"$'\n'"x"
 expect 0 "Cookie" valid_cookie "webvpn=ABC@123@456@DEF"
 expect 1 "leeres Cookie" valid_cookie ""
-expect 1 "Cookie mit Leerzeichen" valid_cookie "a b"
-expect 1 "Cookie mit Quote" valid_cookie "a'b"
+expect 0 "Cookie mit Leerzeichen" valid_cookie "a b"
+expect 0 "Cookie mit Quote" valid_cookie "a'b"
 # shellcheck disable=SC2016
-expect 1 "Cookie mit Backtick" valid_cookie 'a`id`'
-expect 1 "Cookie mit Backslash" valid_cookie 'a\b'
+expect 0 "Cookie mit Backtick" valid_cookie 'a`id`'
+expect 0 "Cookie mit Backslash"
+expect 1 "Cookie mit Tab" valid_cookie "$(printf 'a\tb')"
+expect 1 "Cookie mit Nicht-ASCII" valid_cookie "aä" valid_cookie 'a\b'
 expect 1 "Cookie zu lang" valid_cookie "$(printf 'a%.0s' {1..8200})"
 # cmd_connect bis zur ersten Prüfung nach den Eingaben: gültig → 69 (openconnect-Kopie fehlt), ungültig → 65
 # shellcheck disable=SC2317,SC2329  # wird über expect aufgerufen (SC2317 = ältere shellcheck)

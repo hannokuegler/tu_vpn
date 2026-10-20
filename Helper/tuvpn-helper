@@ -56,12 +56,9 @@ valid_fingerprint() {
 }
 
 valid_cookie() {
-  local pattern='^[!-~]+$' # druckbares ASCII ohne Leerzeichen
-  [ "${#1}" -ge 1 ] && [ "${#1}" -le 8192 ] && [[ "$1" =~ $pattern ]] || return 1
-  case "$1" in
-    *\'* | *\"* | *\\* | *\`*) return 1 ;;
-  esac
-  return 0
+  # Druckbares ASCII inkl. Leerzeichen und Quotes: das Cookie geht nur per printf an stdin von openconnect.
+  local pattern='^[ -~]+$'
+  [ "${#1}" -ge 1 ] && [ "${#1}" -le 8192 ] && [[ "$1" =~ $pattern ]]
 }
 
 # PID des laufenden TU-Tunnels aus der root-eigenen PID-Datei — nur wenn es wirklich openconnect ist.
