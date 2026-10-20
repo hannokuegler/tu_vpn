@@ -29,8 +29,45 @@ struct VpnSession: Equatable {
 
     /// Liest COOKIE='…', CONNECT_URL='…', FINGERPRINT='…' aus der Standardausgabe von `openconnect --authenticate`.
     init?(authenticateOutput: String) {
+        let values = Self.authenticateValues(authenticateOutput)
+        guard let cookie = values["COOKIE"], let connectUrl = values["CONNECT_URL"],
+              let fingerprint = values["FINGERPRINT"] else { return nil }
+        self.init(cookie: cookie, connectUrl: connectUrl, serverFingerprint: fingerprint)
+    }
+
+    /// Warum `init?(authenticateOutput:)` scheitert — für Fehlermeldung und Anmelde-Log.
+    /// Nennt nie den Inhalt des Cookies; URL und Pin sind nicht geheim.
+    static func rejectionReason(authenticateOutput: String) -> String? {
+        let values = authenticateValues(authenticateOutput)
+        guard let cookie = values["COOKIE"] else { return "COOKIE fehlt" }
+        guard isValidCookie(cookie) else {
+            return "COOKIE ungültig (\(cookie.utf8.count) Zeichen" + forbiddenCharacterNames(cookie) + ")"
+        }
+        guard let connectUrl = values["CONNECT_URL"] else { return "CONNECT_URL fehlt" }
+        guard isValidConnectUrl(connectUrl) else { return "CONNECT_URL ungültig: \(connectUrl.prefix(200))" }
+        guard let fingerprint = values["FINGERPRINT"] else { return "FINGERPRINT fehlt" }
+        guard isValidFingerprint(fingerprint) else { return "FINGERPRINT ungültig: \(fingerprint.prefix(100))" }
+        return nil
+    }
+
+    /// Benennt nur die verbotenen Zeichen (je einmal), nie den Rest des Cookies.
+    private static func forbiddenCharacterNames(_ cookie: String) -> String {
+        var names: [String] = []
+        for scalar in cookie.unicodeScalars {
+            let name: String
+            switch scalar.value {
+            case 0x20...0x7E: continue
+            case 0..<0x20, 0x7F: name = "Steuerzeichen"
+            default: name = "Nicht-ASCII"
+            }
+            if !names.contains(name) { names.append(name) }
+        }
+        return names.isEmpty ? "" : ", verboten: " + names.joined(separator: " ")
+    }
+
+    private static func authenticateValues(_ output: String) -> [String: String] {
         var values: [String: String] = [:]
-        for line in authenticateOutput.components(separatedBy: "\n") {
+        for line in output.components(separatedBy: "\n") {
             guard let separator = line.firstIndex(of: "=") else { continue }
             let name = String(line[..<separator])
             var value = String(line[line.index(after: separator)...])
@@ -39,19 +76,17 @@ struct VpnSession: Equatable {
             }
             values[name] = value
         }
-        guard let cookie = values["COOKIE"], let connectUrl = values["CONNECT_URL"],
-              let fingerprint = values["FINGERPRINT"] else { return nil }
-        self.init(cookie: cookie, connectUrl: connectUrl, serverFingerprint: fingerprint)
+        return values
     }
 
     // MARK: Prüfregeln
 
-    /// Druckbares ASCII ohne Leerzeichen, Quotes und Backslash; das Cookie geht nur über eine Datei an root.
+    /// Druckbares ASCII inkl. Leerzeichen, ohne Steuerzeichen und Zeilenumbruch. Das Cookie steht nie in
+    /// einem Shell-Befehl — es geht nur über eine 0600-Datei bzw. stdin an `--cookie-on-stdin`, deshalb
+    /// sind Quotes und Leerzeichen harmlos (der TU-Server liefert seit Okt 2026 solche Cookies).
     static func isValidCookie(_ cookie: String) -> Bool {
         guard (1...8192).contains(cookie.utf8.count) else { return false }
-        return cookie.unicodeScalars.allSatisfy { scalar in
-            (0x21...0x7E).contains(scalar.value) && !"'\"\\`".unicodeScalars.contains(scalar)
-        }
+        return cookie.unicodeScalars.allSatisfy { (0x20...0x7E).contains($0.value) }
     }
 
     /// Nur `https://vpn.tuwien.ac.at[:443]/…` mit harmlosen Zeichen.

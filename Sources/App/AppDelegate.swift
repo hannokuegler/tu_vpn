@@ -370,15 +370,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             "--authenticate", "--protocol=anyconnect", "--authgroup=\(profile.rawValue)",
             "--user=\(user)", "--passwd-on-stdin", Config.vpnServer,
         ], input: "\(password)\n\(mfaCode)\n", timeout: Config.authTimeoutSeconds)
-        writeAuthLog(result.errorOutput)
-
-        if result.timedOut { return .failure(.timeout, "") }
+        if result.timedOut { writeAuthLog(result.errorOutput); return .failure(.timeout, "") }
         let details = lastLines(result.errorOutput, 6)
         if result.exitCode == 0 {
-            if let session = VpnSession(authenticateOutput: result.output) { return .success(session) }
+            if let session = VpnSession(authenticateOutput: result.output) {
+                writeAuthLog(result.errorOutput)
+                return .success(session)
+            }
+            let reason = VpnSession.rejectionReason(authenticateOutput: result.output) ?? "?"
+            writeAuthLog(result.errorOutput + "\nTU VPN: Session-Daten verworfen – \(reason)\n")
             return .failure(.unknown, L("Der Server hat unerwartete Session-Daten geliefert.",
-                                        "The server returned unexpected session data."))
+                                        "The server returned unexpected session data.") + "\n\(reason)")
         }
+        writeAuthLog(result.errorOutput)
         return .failure(FailureClassifier.classify(result.errorOutput), details)
     }
 

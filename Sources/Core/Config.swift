@@ -74,6 +74,17 @@ enum VpnProfile: String, CaseIterable {
     }
 }
 
+enum TunnelCommandLine {
+    /// Ist dieser openconnect-Prozess (Kommandozeile aus `ps`) ein TU-Tunnel? Für Starts ohne PID-Datei.
+    /// `nil` = kein TU-Tunnel, `.some(nil)` = Tunnel mit unbekanntem Profil.
+    /// `--authenticate` ist nur ein Login (der App selbst oder von Hand) und baut keinen Tunnel.
+    static func profile(ofArguments arguments: String) -> VpnProfile?? {
+        let words = arguments.split(whereSeparator: \.isWhitespace)
+        guard arguments.contains(Config.vpnServer), !words.contains("--authenticate") else { return nil }
+        return .some(VpnProfile.allCases.first { words.contains(Substring("--authgroup=" + $0.rawValue)) })
+    }
+}
+
 enum LoginNormalizer {
     /// Macht aus der Eingabe den VPN-Benutzernamen, z. B. `E 1234 5678` → `e12345678@student.tuwien.ac.at`.
     /// `nil` heißt: kein gültiger TU-Login (Tippfehler in Domain, Sonderzeichen …).
@@ -124,7 +135,7 @@ enum Passwordless {
     static let versionFilePath = "/Library/TUvpn/VERSION"
     static let sudoersPath = "/etc/sudoers.d/tuvpn"
     /// Muss zu HELPER_VERSION in Helper/tuvpn-helper passen.
-    static let expectedHelperVersion = 1
+    static let expectedHelperVersion = 2
 
     /// Bewertet, was auf der Platte liegt. `currentOpenconnectSource` = aufgelöster Pfad des
     /// Homebrew-openconnect (nil, wenn Homebrew-openconnect fehlt — die Kopie läuft trotzdem).

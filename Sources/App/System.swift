@@ -219,9 +219,7 @@ struct TunnelProcess {
             return TunnelProcess(pid: pid, fromPidFile: true, profileFromArguments: nil)
         }
         for pid in openconnectPids() {
-            let arguments = processArguments(pid)
-            guard arguments.contains(Config.vpnServer) else { continue }
-            let profile = VpnProfile.allCases.first { arguments.contains("--authgroup=" + $0.rawValue) }
+            guard let profile = TunnelCommandLine.profile(ofArguments: processArguments(pid)) else { continue }
             return TunnelProcess(pid: pid, fromPidFile: false, profileFromArguments: profile)
         }
         return nil

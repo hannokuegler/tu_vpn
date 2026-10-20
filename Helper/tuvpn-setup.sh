@@ -18,7 +18,7 @@ umask 022
 
 readonly INSTALL_DIR=/Library/TUvpn
 readonly SUDOERS_FILE=/etc/sudoers.d/tuvpn
-readonly HELPER_VERSION=1
+readonly HELPER_VERSION=2
 readonly OPENCONNECT_CANDIDATES=(/opt/homebrew/bin/openconnect /usr/local/bin/openconnect /opt/local/sbin/openconnect)
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 readonly SCRIPT_DIR

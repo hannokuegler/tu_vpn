@@ -66,9 +66,11 @@ check(!VpnSession.isValidConnectUrl("https://vpn.tuwien.ac.at/';reboot;'"), "She
 check(!VpnSession.isValidConnectUrl("https://vpn.tuwien.ac.at/$(id)"), "Command Substitution")
 check(VpnSession.isValidCookie(validCookie), "gültiges Cookie")
 check(!VpnSession.isValidCookie(""), "leeres Cookie")
-check(!VpnSession.isValidCookie("a b"), "Leerzeichen im Cookie")
+check(VpnSession.isValidCookie("webvpn=a b; c='d'"), "Leerzeichen und Quotes im Cookie (geht nur über stdin)")
 check(!VpnSession.isValidCookie("abc\ndef"), "Zeilenumbruch im Cookie")
-check(!VpnSession.isValidCookie("abc'def"), "Quote im Cookie")
+check(!VpnSession.isValidCookie("abc\tdef"), "Tab im Cookie")
+check(!VpnSession.isValidCookie("abc\u{7F}"), "DEL im Cookie")
+check(!VpnSession.isValidCookie("abcä"), "Nicht-ASCII im Cookie")
 
 let authenticateOutput = """
 POST https://vpn.tuwien.ac.at/
@@ -88,6 +90,26 @@ check(VpnSession(authenticateOutput: "COOKIE='x'\nCONNECT_URL='https://evil.exam
 check(VpnSession(serialized: "\(validCookie)\nhttps://evil.example/\n\(validFingerprint)") == nil,
       "präparierter Schlüsselbund-Eintrag wird verworfen")
 check(VpnSession(serialized: "only-one-line") == nil, "kaputter Eintrag")
+checkEqual(VpnSession.rejectionReason(authenticateOutput: authenticateOutput), nil, "gültige Ausgabe → kein Grund")
+checkEqual(VpnSession.rejectionReason(authenticateOutput: "CONNECT_URL='\(validUrl)'\nFINGERPRINT='\(validFingerprint)'"),
+           "COOKIE fehlt", "fehlendes Cookie benannt")
+checkEqual(VpnSession.rejectionReason(authenticateOutput: "COOKIE='a\tb'\nCONNECT_URL='\(validUrl)'\nFINGERPRINT='\(validFingerprint)'"),
+           "COOKIE ungültig (3 Zeichen, verboten: Steuerzeichen)", "Cookie-Grund nennt nur das Zeichen")
+checkEqual(VpnSession.rejectionReason(authenticateOutput: "COOKIE='\(validCookie)'\nCONNECT_URL='https://vpn2.tuwien.ac.at/'\nFINGERPRINT='\(validFingerprint)'"),
+           "CONNECT_URL ungültig: https://vpn2.tuwien.ac.at/", "URL-Grund mit URL")
+checkEqual(VpnSession.rejectionReason(authenticateOutput: "COOKIE='\(validCookie)'\nCONNECT_URL='\(validUrl)'\nFINGERPRINT='sha256:abc'"),
+           "FINGERPRINT ungültig: sha256:abc", "Fingerprint-Grund")
+
+// MARK: Tunnel an der Kommandozeile erkennen (ohne PID-Datei)
+
+checkEqual(TunnelCommandLine.profile(ofArguments: "/opt/homebrew/bin/openconnect --background --protocol=anyconnect --authgroup=1_TU_getunnelt https://vpn.tuwien.ac.at/"),
+           .some(.tuOnly), "alter Tunnel-Start mit Profil")
+checkEqual(TunnelCommandLine.profile(ofArguments: "/opt/homebrew/bin/openconnect --protocol=anyconnect https://vpn.tuwien.ac.at/"),
+           .some(nil), "Tunnel ohne erkennbares Profil")
+checkEqual(TunnelCommandLine.profile(ofArguments: "/opt/homebrew/bin/openconnect --authenticate --protocol=anyconnect --authgroup=1_TU_getunnelt vpn.tuwien.ac.at"),
+           nil, "Login (--authenticate) ist kein Tunnel")
+checkEqual(TunnelCommandLine.profile(ofArguments: "/opt/homebrew/bin/openconnect --protocol=anyconnect vpn.example.org"),
+           nil, "anderes VPN")
 
 // MARK: Fehlerbilder
 
@@ -190,7 +212,7 @@ checkEqual(ExecutableTrust.problems([.init(path: "/opt/local/sbin/openconnect", 
 
 // MARK: Ohne Mac-Passwort
 
-let versionFile = "helper=1\nsource=/opt/homebrew/Cellar/openconnect/9.21/bin/openconnect\nopenconnect=OpenConnect version v9.21\n"
+let versionFile = "helper=\(Passwordless.expectedHelperVersion)\nsource=/opt/homebrew/Cellar/openconnect/9.21/bin/openconnect\nopenconnect=OpenConnect version v9.21\n"
 let currentSource = "/opt/homebrew/Cellar/openconnect/9.21/bin/openconnect"
 checkEqual(Passwordless.evaluate(helperInstalled: false, sudoersInstalled: false, versionFile: nil,
                                  currentOpenconnectSource: currentSource), .off, "nicht eingerichtet")
@@ -202,7 +224,8 @@ checkEqual(Passwordless.evaluate(helperInstalled: true, sudoersInstalled: true, 
                                  currentOpenconnectSource: "/opt/homebrew/Cellar/openconnect/9.22/bin/openconnect"),
            .outdated, "openconnect aktualisiert")
 checkEqual(Passwordless.evaluate(helperInstalled: true, sudoersInstalled: true,
-                                 versionFile: versionFile.replacingOccurrences(of: "helper=1", with: "helper=0"),
+                                 versionFile: versionFile.replacingOccurrences(of: "helper=\(Passwordless.expectedHelperVersion)",
+                                                                              with: "helper=\(Passwordless.expectedHelperVersion - 1)"),
                                  currentOpenconnectSource: currentSource), .outdated, "alter Helper")
 checkEqual(Passwordless.evaluate(helperInstalled: true, sudoersInstalled: true, versionFile: nil,
                                  currentOpenconnectSource: currentSource), .outdated, "VERSION fehlt")
